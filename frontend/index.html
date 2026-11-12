@@ -234,101 +234,87 @@
       <div class="section-header">
         <div>
           <span class="section-tag">Section D</span>
-          <h2 class="section-title">Automated API Testing (Postman & Newman)</h2>
+          <h2 class="section-title">Live API Test Runner</h2>
         </div>
-        <span class="testing-badge">Automated Test Suite</span>
+        <span class="testing-badge">Live Results</span>
       </div>
 
       <div class="testing-explanation">
         <p>
-          End-to-end API testing validates financial transaction integrity, database atomicity, input constraints, and idempotency. Tests are defined in Postman with JavaScript assertions (<code>pm.test</code>) and executed via Newman CLI.
+          Click <strong>Run All 5 Tests</strong> to test the Flask API instantly. Each test hits the real backend and shows a live <span style="color:#22c55e;font-weight:600;">PASS</span> or <span style="color:#ef4444;font-weight:600;">FAIL</span> result.
         </p>
-      </div>
-
-      <!-- Latest Execution Timestamp & Status -->
-      <div class="latest-execution-bar" id="latestExecutionBanner">
-        <span class="exec-dot"></span>
-        <span class="exec-label">Latest Test Execution:</span>
-        <span id="latestExecutionTime" class="exec-time">No test execution recorded yet</span>
       </div>
 
       <div class="test-stats-grid">
         <div class="stat-card total-card">
-          <div class="stat-number" id="testTotalCount">--</div>
-          <div class="stat-label">Total Assertions</div>
-          <div class="stat-subtext">Assertions evaluated</div>
+          <div class="stat-number" id="testTotalCount">5</div>
+          <div class="stat-label">Total Tests</div>
         </div>
         <div class="stat-card passed-card">
           <div class="stat-number" id="testPassedCount">--</div>
-          <div class="stat-label">Passed Assertions</div>
-          <div class="stat-subtext" id="passRateSubtext">Awaiting execution</div>
+          <div class="stat-label">Passed</div>
         </div>
         <div class="stat-card failed-card">
           <div class="stat-number" id="testFailedCount">--</div>
-          <div class="stat-label">Failed Assertions</div>
-          <div class="stat-subtext">Unhandled errors</div>
+          <div class="stat-label">Failed</div>
         </div>
       </div>
 
-      <div class="test-scenarios-list">
-        <h4 class="list-heading">Five Core Evaluated Scenarios:</h4>
-        <div class="scenarios-grid" id="scenariosContainer">
-          <div class="scenario-item" id="scenarioCard1">
-            <span class="scenario-status-icon" id="scenarioIcon1">•</span>
-            <div class="scenario-text">
-              <strong>Scenario 1:</strong> Valid money transfer – expected success (HTTP 200)
-            </div>
-          </div>
-          <div class="scenario-item" id="scenarioCard2">
-            <span class="scenario-status-icon" id="scenarioIcon2">•</span>
-            <div class="scenario-text">
-              <strong>Scenario 2:</strong> Insufficient balance – expected rejection (HTTP 400)
-            </div>
-          </div>
-          <div class="scenario-item" id="scenarioCard3">
-            <span class="scenario-status-icon" id="scenarioIcon3">•</span>
-            <div class="scenario-text">
-              <strong>Scenario 3:</strong> Zero amount – expected rejection (HTTP 400)
-            </div>
-          </div>
-          <div class="scenario-item" id="scenarioCard4">
-            <span class="scenario-status-icon" id="scenarioIcon4">•</span>
-            <div class="scenario-text">
-              <strong>Scenario 4:</strong> Invalid receiver – expected rejection (HTTP 404)
-            </div>
-          </div>
-          <div class="scenario-item" id="scenarioCard5">
-            <span class="scenario-status-icon" id="scenarioIcon5">•</span>
-            <div class="scenario-text">
-              <strong>Scenario 5:</strong> Duplicate transaction ID – expected rejection (HTTP 409)
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="testing-actions">
+      <div class="testing-actions" style="margin-bottom:24px;">
         <button id="runTestsBtn" class="btn-primary btn-large">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polygon points="5 3 19 12 5 21 5 3"></polygon>
           </svg>
-          Run API Tests
+          Run All 5 Tests
         </button>
-        <button id="refreshTestStatsBtn" class="btn-secondary btn-large">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-1.19"/>
-          </svg>
-          Refresh Test Stats
-        </button>
-        <a id="viewReportLink" href="/reports/postman_test_report.html" target="_blank" class="btn-outline btn-large">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-          </svg>
-          Open HTML Test Report
-        </a>
+        <span id="lastRunTime" style="font-size:13px;color:#888;align-self:center;"></span>
+      </div>
+
+      <div class="test-scenarios-list">
+        <h4 class="list-heading">Test Results:</h4>
+        <div class="scenarios-grid" id="scenariosContainer">
+
+          <div class="scenario-item" id="scenarioCard1">
+            <span class="scenario-status-icon" id="scenarioIcon1">&bull;</span>
+            <div class="scenario-text">
+              <strong>Test 1 &mdash; Positive Test:</strong> Transfer &#8377;500 from Alice &rarr; Bob (should succeed)
+              <div id="scenarioDetail1" class="scenario-detail"></div>
+            </div>
+          </div>
+
+          <div class="scenario-item" id="scenarioCard2">
+            <span class="scenario-status-icon" id="scenarioIcon2">&bull;</span>
+            <div class="scenario-text">
+              <strong>Test 2 &mdash; Insufficient Balance:</strong> Transfer &#8377;99,999 when sender has less (should be rejected)
+              <div id="scenarioDetail2" class="scenario-detail"></div>
+            </div>
+          </div>
+
+          <div class="scenario-item" id="scenarioCard3">
+            <span class="scenario-status-icon" id="scenarioIcon3">&bull;</span>
+            <div class="scenario-text">
+              <strong>Test 3 &mdash; Zero Amount:</strong> Transfer &#8377;0 (invalid boundary, should be rejected)
+              <div id="scenarioDetail3" class="scenario-detail"></div>
+            </div>
+          </div>
+
+          <div class="scenario-item" id="scenarioCard4">
+            <span class="scenario-status-icon" id="scenarioIcon4">&bull;</span>
+            <div class="scenario-text">
+              <strong>Test 4 &mdash; Invalid Receiver:</strong> Send to a user ID that does not exist (should be rejected)
+              <div id="scenarioDetail4" class="scenario-detail"></div>
+            </div>
+          </div>
+
+          <div class="scenario-item" id="scenarioCard5">
+            <span class="scenario-status-icon" id="scenarioIcon5">&bull;</span>
+            <div class="scenario-text">
+              <strong>Test 5 &mdash; Duplicate Transaction:</strong> Same Transaction ID used twice (second should be rejected)
+              <div id="scenarioDetail5" class="scenario-detail"></div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </section>
 

@@ -892,13 +892,20 @@ body {
 
 .scenario-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 12px 16px;
   border-radius: var(--radius-sm);
   background: #ffffff;
   border: 1px solid var(--border-color);
   font-size: 0.875rem;
+  transition: border-left 0.3s, background 0.3s;
+}
+
+.scenario-detail {
+  font-size: 12px;
+  margin-top: 4px;
+  color: #6b7280;
 }
 
 .scenario-item.passed {

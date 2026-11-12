@@ -27,14 +27,10 @@ const accountsOverviewContainer = document.getElementById('accountsOverviewConta
 
 // Section D Elements
 const runTestsBtn = document.getElementById('runTestsBtn');
-const refreshTestStatsBtn = document.getElementById('refreshTestStatsBtn');
-const viewReportLink = document.getElementById('viewReportLink');
 const testTotalCount = document.getElementById('testTotalCount');
 const testPassedCount = document.getElementById('testPassedCount');
 const testFailedCount = document.getElementById('testFailedCount');
-const passRateSubtext = document.getElementById('passRateSubtext');
-const latestExecutionTime = document.getElementById('latestExecutionTime');
-const latestExecutionBanner = document.getElementById('latestExecutionBanner');
+const lastRunTime = document.getElementById('lastRunTime');
 
 // Modal Elements
 const openAddUserBtn = document.getElementById('openAddUserBtn');
@@ -47,14 +43,12 @@ const addUserForm = document.getElementById('addUserForm');
 document.addEventListener('DOMContentLoaded', () => {
   generateNewTransactionId();
   loadAllUsersAndData();
-  fetchTestSummary();
 
   // Event Listeners
   viewUserSelect.addEventListener('change', (e) => switchUser(e.target.value));
   regenerateTxnBtn.addEventListener('click', generateNewTransactionId);
   refreshBtn.addEventListener('click', () => {
     loadAllUsersAndData();
-    fetchTestSummary();
     showNotification('Wallet data refreshed successfully.', 'success');
   });
 
@@ -72,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetDemoBtn.addEventListener('click', handleResetDemo);
   }
 
-  // Section D Test Buttons
+  // Section D Test Button
   if (runTestsBtn) {
     runTestsBtn.addEventListener('click', handleRunApiTests);
   }
@@ -470,149 +464,210 @@ async function handleAddUserSubmit(e) {
 }
 
 /**
- * Trigger Actual Newman API Tests (Button: "Run API Tests")
+ * LIVE API TEST RUNNER — runs all 5 tests directly from the browser
+ * No Newman, no files, no reports — just real fetch calls to the Flask backend
  */
 async function handleRunApiTests() {
   if (!runTestsBtn) return;
-  const originalHTML = runTestsBtn.innerHTML;
+
+  // Disable button and show loading state
   runTestsBtn.disabled = true;
-  runTestsBtn.innerHTML = `
-    <svg class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
-    </svg>
-    Running Tests...
-  `;
+  runTestsBtn.innerHTML = `<svg class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path></svg> Running Tests...`;
 
-  try {
-    const res = await fetch(`${API_BASE}/api/run-tests`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    const data = await res.json();
-
-    if (res.ok && data.executed) {
-      updateTestingDashboard(data);
-      showNotification(
-        `✓ API Tests Completed: ${data.passed}/${data.total} Assertions Passed in ${data.duration_ms}ms`,
-        data.failed === 0 ? 'success' : 'error'
-      );
-      // Reload user data because DB was reset before test execution
-      await loadAllUsersAndData();
-    } else {
-      const errText = data.error || 'Failed to execute automated tests.';
-      showNotification(`✕ Test Execution Error: ${errText}`, 'error');
-      if (latestExecutionTime) {
-        latestExecutionTime.textContent = `Execution Error: ${errText}`;
-      }
-    }
-  } catch (err) {
-    showNotification(`✕ Test runner error: ${err.message}`, 'error');
-  } finally {
-    runTestsBtn.disabled = false;
-    runTestsBtn.innerHTML = originalHTML;
+  // Reset all 5 scenario cards to "running" state
+  for (let i = 1; i <= 5; i++) {
+    setScenarioState(i, 'running', 'Testing...');
   }
-}
-
-/**
- * Fetch latest test execution summary from Newman JSON report
- */
-async function fetchTestSummary(showFeedback = false) {
-  try {
-    const res = await fetch(`${API_BASE}/api/test-summary?t=${Date.now()}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const summary = await res.json();
-    updateTestingDashboard(summary);
-  } catch (err) {
-    console.error('Failed to fetch test summary:', err);
-    resetTestingDashboardToIdle();
-  }
-}
-
-/**
- * Update Section D Dashboard UI with real test summary data
- */
-function updateTestingDashboard(summary) {
-  if (!summary || !summary.executed || summary.total === undefined) {
-    resetTestingDashboardToIdle();
-    return;
-  }
-
-  // Update Assertion Numbers (genuine data, never hardcoded)
-  testTotalCount.textContent = summary.total;
-  testPassedCount.textContent = summary.passed;
-  testFailedCount.textContent = summary.failed;
-
-  // Pass rate subtext
-  if (passRateSubtext) {
-    passRateSubtext.textContent = (summary.failed === 0) 
-      ? '100% verification passed' 
-      : `${summary.failed} assertion(s) failed`;
-  }
-
-  // Update Execution Timestamp
-  if (latestExecutionTime) {
-    latestExecutionTime.textContent = `${summary.execution_time} (${summary.duration_ms} ms execution)`;
-  }
-
-  // Update Status Indicator Dot
-  if (latestExecutionBanner) {
-    const dot = latestExecutionBanner.querySelector('.exec-dot');
-    if (dot) {
-      dot.className = (summary.failed === 0) ? 'exec-dot' : 'exec-dot exec-dot-failed';
-    }
-  }
-
-  // Update Five Scenarios Cards dynamically
-  if (Array.isArray(summary.scenarios)) {
-    summary.scenarios.forEach(sc => {
-      const card = document.getElementById(`scenarioCard${sc.id}`);
-      const icon = document.getElementById(`scenarioIcon${sc.id}`);
-      if (card && icon) {
-        const isPassed = (sc.status === 'PASSED');
-        card.className = `scenario-item ${isPassed ? 'passed' : 'failed'}`;
-        icon.className = `scenario-status-icon ${isPassed ? '' : 'failed'}`;
-        icon.textContent = isPassed ? '✓' : '✕';
-      }
-    });
-  }
-
-  // Update HTML Report Link with cache buster query parameter
-  if (viewReportLink) {
-    viewReportLink.href = `/reports/postman_test_report.html?t=${Date.now()}`;
-  }
-}
-
-/**
- * Reset Section D when no test execution has occurred yet
- */
-function resetTestingDashboardToIdle() {
-  testTotalCount.textContent = '--';
   testPassedCount.textContent = '--';
   testFailedCount.textContent = '--';
 
-  if (passRateSubtext) {
-    passRateSubtext.textContent = 'Awaiting execution';
-  }
+  // First reset the database so tests start from a clean state
+  try {
+    await fetch(`${API_BASE}/api/reset-database`, { method: 'POST' });
+  } catch (e) { /* ignore reset errors */ }
 
-  if (latestExecutionTime) {
-    latestExecutionTime.textContent = 'No automated test execution recorded yet. Click "Run API Tests".';
-  }
+  // Wait a moment, then reload balances
+  await new Promise(r => setTimeout(r, 300));
+  await loadAllUsersAndData();
 
-  if (latestExecutionBanner) {
-    const dot = latestExecutionBanner.querySelector('.exec-dot');
-    if (dot) dot.className = 'exec-dot exec-dot-idle';
-  }
+  let passed = 0;
+  let failed = 0;
 
-  for (let i = 1; i <= 5; i++) {
-    const card = document.getElementById(`scenarioCard${i}`);
-    const icon = document.getElementById(`scenarioIcon${i}`);
-    if (card && icon) {
-      card.className = 'scenario-item';
-      icon.className = 'scenario-status-icon';
-      icon.textContent = '•';
+  // ─────────────────────────────────────────────────
+  // TEST 1: Positive Test — valid ₹500 transfer (Alice → Bob)
+  // Expected: HTTP 200
+  // ─────────────────────────────────────────────────
+  try {
+    const txnId = 'TEST_TXN_' + Date.now();
+    const res = await fetch(`${API_BASE}/api/transfer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transaction_id: txnId, sender_id: 'U001', receiver_id: 'U002', amount: 500 })
+    });
+    if (res.status === 200) {
+      setScenarioState(1, 'passed', 'HTTP 200 ✓ — Transfer of ₹500 succeeded as expected');
+      passed++;
+    } else {
+      const d = await res.json();
+      setScenarioState(1, 'failed', `HTTP ${res.status} — Expected 200 but got rejection: ${d.error || ''}`);
+      failed++;
     }
+  } catch (e) {
+    setScenarioState(1, 'failed', 'Network error: ' + e.message);
+    failed++;
+  }
+
+  // ─────────────────────────────────────────────────
+  // TEST 2: Insufficient Balance — transfer ₹99,999
+  // Expected: HTTP 400
+  // ─────────────────────────────────────────────────
+  try {
+    const res = await fetch(`${API_BASE}/api/transfer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transaction_id: 'TEST_INSUF_' + Date.now(), sender_id: 'U001', receiver_id: 'U002', amount: 99999 })
+    });
+    if (res.status === 400) {
+      setScenarioState(2, 'passed', 'HTTP 400 ✓ — Insufficient balance correctly rejected');
+      passed++;
+    } else {
+      setScenarioState(2, 'failed', `HTTP ${res.status} — Expected 400 but got ${res.status}`);
+      failed++;
+    }
+  } catch (e) {
+    setScenarioState(2, 'failed', 'Network error: ' + e.message);
+    failed++;
+  }
+
+  // ─────────────────────────────────────────────────
+  // TEST 3: Zero Amount — transfer ₹0
+  // Expected: HTTP 400
+  // ─────────────────────────────────────────────────
+  try {
+    const res = await fetch(`${API_BASE}/api/transfer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transaction_id: 'TEST_ZERO_' + Date.now(), sender_id: 'U001', receiver_id: 'U002', amount: 0 })
+    });
+    if (res.status === 400) {
+      setScenarioState(3, 'passed', 'HTTP 400 ✓ — Zero amount correctly rejected');
+      passed++;
+    } else {
+      setScenarioState(3, 'failed', `HTTP ${res.status} — Expected 400 but got ${res.status}`);
+      failed++;
+    }
+  } catch (e) {
+    setScenarioState(3, 'failed', 'Network error: ' + e.message);
+    failed++;
+  }
+
+  // ─────────────────────────────────────────────────
+  // TEST 4: Invalid Receiver — user does not exist
+  // Expected: HTTP 404
+  // ─────────────────────────────────────────────────
+  try {
+    const res = await fetch(`${API_BASE}/api/transfer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transaction_id: 'TEST_INVLD_' + Date.now(), sender_id: 'U001', receiver_id: 'U999_INVALID', amount: 100 })
+    });
+    if (res.status === 404) {
+      setScenarioState(4, 'passed', 'HTTP 404 ✓ — Invalid receiver correctly rejected');
+      passed++;
+    } else {
+      setScenarioState(4, 'failed', `HTTP ${res.status} — Expected 404 but got ${res.status}`);
+      failed++;
+    }
+  } catch (e) {
+    setScenarioState(4, 'failed', 'Network error: ' + e.message);
+    failed++;
+  }
+
+  // ─────────────────────────────────────────────────
+  // TEST 5: Duplicate Transaction — same ID twice
+  // Expected: first = 200, second = 409
+  // ─────────────────────────────────────────────────
+  try {
+    const dupId = 'TEST_DUP_' + Date.now();
+    // First request (should succeed)
+    await fetch(`${API_BASE}/api/transfer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transaction_id: dupId, sender_id: 'U001', receiver_id: 'U002', amount: 100 })
+    });
+    // Second request with same ID (should be rejected)
+    const res2 = await fetch(`${API_BASE}/api/transfer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transaction_id: dupId, sender_id: 'U001', receiver_id: 'U002', amount: 100 })
+    });
+    if (res2.status === 409) {
+      setScenarioState(5, 'passed', 'HTTP 409 ✓ — Duplicate transaction correctly rejected');
+      passed++;
+    } else {
+      setScenarioState(5, 'failed', `HTTP ${res2.status} — Expected 409 but got ${res2.status}`);
+      failed++;
+    }
+  } catch (e) {
+    setScenarioState(5, 'failed', 'Network error: ' + e.message);
+    failed++;
+  }
+
+  // ─────────────────────────────────────────────────
+  // Update summary stats
+  // ─────────────────────────────────────────────────
+  testPassedCount.textContent = passed;
+  testFailedCount.textContent = failed;
+  if (lastRunTime) {
+    lastRunTime.textContent = `Last run: ${new Date().toLocaleTimeString()}`;
+  }
+
+  const allPassed = failed === 0;
+  showNotification(
+    allPassed
+      ? `✓ All 5 tests PASSED — API is working correctly!`
+      : `${passed} passed, ${failed} failed — check the results below`,
+    allPassed ? 'success' : 'error'
+  );
+
+  // Restore button
+  runTestsBtn.disabled = false;
+  runTestsBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Run All 5 Tests`;
+
+  // Refresh balances after tests
+  await loadAllUsersAndData();
+}
+
+/**
+ * Update a single scenario card's visual state
+ * state: 'running' | 'passed' | 'failed'
+ */
+function setScenarioState(id, state, detail) {
+  const card = document.getElementById(`scenarioCard${id}`);
+  const icon = document.getElementById(`scenarioIcon${id}`);
+  const detailEl = document.getElementById(`scenarioDetail${id}`);
+
+  if (!card || !icon) return;
+
+  if (state === 'running') {
+    card.className = 'scenario-item';
+    icon.className = 'scenario-status-icon';
+    icon.textContent = '⟳';
+  } else if (state === 'passed') {
+    card.className = 'scenario-item passed';
+    icon.className = 'scenario-status-icon';
+    icon.textContent = '✓';
+  } else {
+    card.className = 'scenario-item failed';
+    icon.className = 'scenario-status-icon failed';
+    icon.textContent = '✕';
+  }
+
+  if (detailEl && detail) {
+    detailEl.textContent = detail;
+    detailEl.style.fontSize = '12px';
+    detailEl.style.marginTop = '4px';
+    detailEl.style.color = state === 'passed' ? '#16a34a' : state === 'failed' ? '#dc2626' : '#888';
   }
 }
 
