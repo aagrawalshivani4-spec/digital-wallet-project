@@ -1,0 +1,31 @@
+================================================================================
+WALLETPAY AUTOMATED API TESTING EXECUTION SUMMARY
+Project: Digital Wallet and Money Transfer System
+Framework: Postman Collection (v2.1.0) & Newman CLI Runner
+Execution Timestamp: Nov 13, 2026, 01:27:35 AM
+================================================================================
+
+TEST EXECUTION STATISTICS:
+--------------------------------------------------------------------------------
+Total Requests Executed:    15
+Requests Failed:            0
+Total Assertions:           16
+Passed Assertions:          16
+Failed Assertions:          0
+Success Rate:               100.0%
+Total Run Duration:         167 ms
+
+VERIFIED FIVE TEST SCENARIOS:
+--------------------------------------------------------------------------------
+[PASS] Scenario 1: Valid money transfer – expected success
+[PASS] Scenario 2: Insufficient balance – expected rejection
+[PASS] Scenario 3: Zero amount – expected rejection
+[PASS] Scenario 4: Invalid receiver – expected rejection
+[PASS] Scenario 5: Duplicate transaction ID – expected rejection
+
+REPORTS GENERATED:
+--------------------------------------------------------------------------------
+- Interactive HTML Report: reports/postman_test_report.html
+- Machine Summary JSON:   reports/test_summary.json
+- Human Summary Text:     reports/test_execution_summary.txt
+================================================================================

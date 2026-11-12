@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WalletPay — Digital Wallet & Money Transfer System</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="4"></rect>
+            <path d="M16 10h.01"></path>
+            <path d="M2 10h20"></path>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">WalletPay</span>
+          <span class="brand-subtitle">Digital Wallet System</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="active-user-badge">
+          <span class="user-avatar" id="headerAvatar">A</span>
+          <span class="user-greeting" id="headerGreeting">Active: <strong>Alice</strong> (U001)</span>
+        </div>
+        <button id="refreshBtn" class="btn-secondary btn-icon" title="Refresh Wallet Data">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-1.19"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Banner -->
+  <div id="notificationArea" class="notification-container"></div>
+
+  <!-- Main Container -->
+  <main class="main-layout">
+    
+    <!-- SECTION A: DASHBOARD -->
+    <section class="section card dashboard-section">
+      <div class="section-header">
+        <div>
+          <span class="section-tag">Section A</span>
+          <h2 class="section-title">Dashboard</h2>
+        </div>
+        <div class="user-selector-wrapper">
+          <label for="viewUserSelect">View Account:</label>
+          <select id="viewUserSelect" class="form-select user-toggle">
+            <option value="U001" selected>Alice (U001)</option>
+            <option value="U002">Bob (U002)</option>
+          </select>
+          <button id="openAddUserBtn" class="btn-secondary btn-compact" title="Add New Wallet User">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add User
+          </button>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Balance Card -->
+        <div class="balance-card">
+          <div class="balance-card-bg-circle circle-1"></div>
+          <div class="balance-card-bg-circle circle-2"></div>
+          <div class="balance-card-content">
+            <div class="balance-label-row">
+              <span class="balance-label">Current Wallet Balance</span>
+              <span class="balance-chip">Active</span>
+            </div>
+            <div class="balance-amount" id="currentBalanceDisplay">₹5,000.00</div>
+            <div class="balance-footer">
+              <span class="balance-account-id" id="accountNumberDisplay">Account ID: U001</span>
+              <span class="balance-updated" id="lastUpdatedDisplay">Updated just now</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Details Card -->
+        <div class="user-details-card">
+          <h3 class="card-subtitle">User Account Details</h3>
+          <div class="details-list">
+            <div class="detail-item">
+              <span class="detail-label">Account Holder</span>
+              <span class="detail-value" id="accountName">Alice</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">User Identifier</span>
+              <span class="detail-value" id="accountUserId">U001</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Wallet Status</span>
+              <span class="detail-value status-active">Verified & Active</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Currency</span>
+              <span class="detail-value">INR (₹) • Integer Paise Storage</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Summary Cards for Active Users (Dynamic) -->
+      <div class="accounts-overview" id="accountsOverviewContainer">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+    </section>
+
+
+    <!-- SECTION B: TRANSFER MONEY -->
+    <section class="section card transfer-section">
+      <div class="section-header">
+        <div>
+          <span class="section-tag">Section B</span>
+          <h2 class="section-title">Transfer Money</h2>
+        </div>
+        <p class="section-description">Secure peer-to-peer wallet transfer with real-time balance validation</p>
+      </div>
+
+      <form id="transferForm" class="transfer-form">
+        <div class="form-row two-cols">
+          <!-- Sender Selection -->
+          <div class="form-group">
+            <label for="senderSelect" class="form-label">Sender Account</label>
+            <select id="senderSelect" class="form-input" required>
+              <option value="U001" selected>Alice (U001)</option>
+              <option value="U002">Bob (U002)</option>
+            </select>
+          </div>
+
+          <!-- Receiver Selection -->
+          <div class="form-group">
+            <label for="receiverSelect" class="form-label">Receiver Account</label>
+            <select id="receiverSelect" class="form-input" required>
+              <option value="U002" selected>Bob (U002)</option>
+              <option value="U001">Alice (U001)</option>
+              <option value="U999_INVALID">Invalid Receiver (U999 - Test Error)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row two-cols">
+          <!-- Amount Input -->
+          <div class="form-group">
+            <label for="transferAmount" class="form-label">Amount (₹)</label>
+            <div class="input-with-prefix">
+              <span class="input-prefix">₹</span>
+              <input type="number" id="transferAmount" class="form-input" placeholder="e.g. 500" min="1" step="any" required>
+            </div>
+            <div class="quick-amounts">
+              <button type="button" class="btn-chip" onclick="setTransferAmount(100)">₹100</button>
+              <button type="button" class="btn-chip" onclick="setTransferAmount(500)">₹500</button>
+              <button type="button" class="btn-chip" onclick="setTransferAmount(1000)">₹1,000</button>
+              <button type="button" class="btn-chip btn-chip-danger" onclick="setTransferAmount(10000)">₹10,000 (Test Insufficient)</button>
+            </div>
+          </div>
+
+          <!-- Transaction ID (Auto-Generated) -->
+          <div class="form-group">
+            <label for="transactionIdInput" class="form-label">
+              Transaction ID 
+              <span class="label-hint">(Auto-generated unique ID)</span>
+            </label>
+            <div class="input-with-button">
+              <input type="text" id="transactionIdInput" class="form-input" required>
+              <button type="button" id="regenerateTxnBtn" class="btn-secondary btn-compact" title="Generate New Transaction ID">New ID</button>
+            </div>
+            <span class="field-help">Can be reused to demonstrate duplicate transaction rejection (409).</span>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="submitTransferBtn" class="btn-primary btn-large">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            Transfer Money
+          </button>
+          <button type="button" id="resetDemoBtn" class="btn-outline btn-large" title="Restore sample balances">
+            Reset Sample Balances
+          </button>
+        </div>
+      </form>
+    </section>
+
+
+    <!-- SECTION C: TRANSACTION HISTORY -->
+    <section class="section card history-section">
+      <div class="section-header">
+        <div>
+          <span class="section-tag">Section C</span>
+          <h2 class="section-title">Transaction History</h2>
+        </div>
+        <div class="table-legend">
+          <span class="legend-dot dot-debit"></span> Debit (Sent)
+          <span class="legend-dot dot-credit"></span> Credit (Received)
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Transaction ID</th>
+              <th>Sender</th>
+              <th>Receiver</th>
+              <th>Amount</th>
+              <th>Date & Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="transactionTableBody">
+            <tr>
+              <td colspan="6" class="empty-state">No transactions recorded yet. Complete a transfer to view history.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+
+    <!-- SECTION D: API TESTING -->
+    <section class="section card testing-section">
+      <div class="section-header">
+        <div>
+          <span class="section-tag">Section D</span>
+          <h2 class="section-title">Automated API Testing (Postman & Newman)</h2>
+        </div>
+        <span class="testing-badge">Automated Test Suite</span>
+      </div>
+
+      <div class="testing-explanation">
+        <p>
+          End-to-end API testing validates financial transaction integrity, database atomicity, input constraints, and idempotency. Tests are defined in Postman with JavaScript assertions (<code>pm.test</code>) and executed via Newman CLI.
+        </p>
+      </div>
+
+      <!-- Latest Execution Timestamp & Status -->
+      <div class="latest-execution-bar" id="latestExecutionBanner">
+        <span class="exec-dot"></span>
+        <span class="exec-label">Latest Test Execution:</span>
+        <span id="latestExecutionTime" class="exec-time">No test execution recorded yet</span>
+      </div>
+
+      <div class="test-stats-grid">
+        <div class="stat-card total-card">
+          <div class="stat-number" id="testTotalCount">--</div>
+          <div class="stat-label">Total Assertions</div>
+          <div class="stat-subtext">Assertions evaluated</div>
+        </div>
+        <div class="stat-card passed-card">
+          <div class="stat-number" id="testPassedCount">--</div>
+          <div class="stat-label">Passed Assertions</div>
+          <div class="stat-subtext" id="passRateSubtext">Awaiting execution</div>
+        </div>
+        <div class="stat-card failed-card">
+          <div class="stat-number" id="testFailedCount">--</div>
+          <div class="stat-label">Failed Assertions</div>
+          <div class="stat-subtext">Unhandled errors</div>
+        </div>
+      </div>
+
+      <div class="test-scenarios-list">
+        <h4 class="list-heading">Five Core Evaluated Scenarios:</h4>
+        <div class="scenarios-grid" id="scenariosContainer">
+          <div class="scenario-item" id="scenarioCard1">
+            <span class="scenario-status-icon" id="scenarioIcon1">•</span>
+            <div class="scenario-text">
+              <strong>Scenario 1:</strong> Valid money transfer – expected success (HTTP 200)
+            </div>
+          </div>
+          <div class="scenario-item" id="scenarioCard2">
+            <span class="scenario-status-icon" id="scenarioIcon2">•</span>
+            <div class="scenario-text">
+              <strong>Scenario 2:</strong> Insufficient balance – expected rejection (HTTP 400)
+            </div>
+          </div>
+          <div class="scenario-item" id="scenarioCard3">
+            <span class="scenario-status-icon" id="scenarioIcon3">•</span>
+            <div class="scenario-text">
+              <strong>Scenario 3:</strong> Zero amount – expected rejection (HTTP 400)
+            </div>
+          </div>
+          <div class="scenario-item" id="scenarioCard4">
+            <span class="scenario-status-icon" id="scenarioIcon4">•</span>
+            <div class="scenario-text">
+              <strong>Scenario 4:</strong> Invalid receiver – expected rejection (HTTP 404)
+            </div>
+          </div>
+          <div class="scenario-item" id="scenarioCard5">
+            <span class="scenario-status-icon" id="scenarioIcon5">•</span>
+            <div class="scenario-text">
+              <strong>Scenario 5:</strong> Duplicate transaction ID – expected rejection (HTTP 409)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testing-actions">
+        <button id="runTestsBtn" class="btn-primary btn-large">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Run API Tests
+        </button>
+        <button id="refreshTestStatsBtn" class="btn-secondary btn-large">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-1.19"/>
+          </svg>
+          Refresh Test Stats
+        </button>
+        <a id="viewReportLink" href="/reports/postman_test_report.html" target="_blank" class="btn-outline btn-large">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Open HTML Test Report
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal: Add New Wallet User -->
+  <div id="addUserModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Create New Wallet User</h3>
+        <button id="closeAddUserModal" class="modal-close">&times;</button>
+      </div>
+      <form id="addUserForm" class="modal-form">
+        <div class="form-group">
+          <label for="newUserName" class="form-label">Account Holder Name</label>
+          <input type="text" id="newUserName" class="form-input" placeholder="e.g. Charlie" required>
+        </div>
+        <div class="form-group">
+          <label for="newUserBalance" class="form-label">Initial Balance (₹)</label>
+          <div class="input-with-prefix">
+            <span class="input-prefix">₹</span>
+            <input type="number" id="newUserBalance" class="form-input" placeholder="e.g. 3000" min="0" step="any" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="newUserId" class="form-label">User Identifier <span class="label-hint">(Optional, e.g. U003)</span></label>
+          <input type="text" id="newUserId" class="form-input" placeholder="Leave blank to auto-generate (e.g. U003)">
+        </div>
+        <div class="modal-actions">
+          <button type="submit" id="submitAddUserBtn" class="btn-primary btn-large">Create Wallet</button>
+          <button type="button" id="cancelAddUserBtn" class="btn-secondary btn-large">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p>WalletPay • Automated API Testing and Transaction Validation Engine</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

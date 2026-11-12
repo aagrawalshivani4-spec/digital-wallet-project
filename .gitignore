@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.so
+.env
+.venv
+venv/
+env/
+
+# SQLite database (regenerated on startup)
+backend/wallet.db
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V7
+.Trashes
+
+# Newman local installation (large, can be reinstalled with npm install)
+../newman-runner/
+
+# Raw Newman JSON output (regenerated on each run)
+reports/postman_run_result.json
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log

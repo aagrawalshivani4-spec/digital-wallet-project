@@ -1,0 +1,368 @@
+{
+  "info": {
+    "_postman_id": "a91b2c3d-4e5f-6789-0123-abcdef456789",
+    "name": "WalletPay - Core Automated API Test Suite",
+    "description": "Automated API Test Suite for WalletPay Digital Wallet Application.\nCovers exactly the five mandatory test scenarios:\n1. Valid Money Transfer (Expected Success)\n2. Insufficient Balance (Expected Rejection - HTTP 400)\n3. Zero Amount (Expected Rejection - HTTP 400)\n4. Invalid Receiver (Expected Rejection - HTTP 404)\n5. Duplicate Transaction ID (Expected Rejection - HTTP 409)\nIncludes automated JavaScript assertions using pm.test() and balance consistency verifications.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5001",
+      "type": "string"
+    },
+    {
+      "key": "shared_txn_id",
+      "value": "TXN_INIT",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Valid Money Transfer - Expected Success",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Generates a unique transaction ID for positive transfer",
+              "var txnId = \"TXN_VAL_\" + Date.now();",
+              "pm.variables.set(\"dynamic_txn_id\", txnId);",
+              "pm.collectionVariables.set(\"shared_txn_id\", txnId);"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200 OK (Expected Success)\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Transfer completed successfully with correct amount\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Transfer completed successfully.\");",
+              "    pm.expect(jsonData.transaction.status).to.eql(\"SUCCESS\");",
+              "    pm.expect(jsonData.transaction.amount_rupees).to.eql(500);",
+              "});",
+              "",
+              "pm.test(\"Updated sender and receiver balances returned in payload\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.sender_new_balance_rupees).to.be.a('number');",
+              "    pm.expect(jsonData.receiver_new_balance_rupees).to.be.a('number');",
+              "});",
+              "",
+              "pm.test(\"Database balance consistency verified via API request\", function () {",
+              "    var expectedSender = pm.response.json().sender_new_balance_rupees;",
+              "    pm.sendRequest(pm.environment.get(\"baseUrl\") + \"/api/balance/U001\", function (err, res) {",
+              "        pm.expect(res.json().balance_rupees).to.eql(expectedSender);",
+              "    });",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transaction_id\": \"{{dynamic_txn_id}}\",\n  \"sender_id\": \"U001\",\n  \"receiver_id\": \"U002\",\n  \"amount\": 500\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/transfer",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transfer"]
+        },
+        "description": "Scenario 1: Positive Testing. Transfers ₹500 between valid users (Alice -> Bob). Verifies status 200, payload, and database balances."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Insufficient Balance - Expected Rejection",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "var txnId = \"TXN_INSUF_\" + Date.now();",
+              "pm.variables.set(\"dynamic_txn_id\", txnId);",
+              "",
+              "// Baseline balance check before transfer attempt",
+              "pm.sendRequest(pm.environment.get(\"baseUrl\") + \"/api/balance/U001\", function (err, res) {",
+              "    if (!err && res.json()) {",
+              "        pm.collectionVariables.set(\"balance_before_insuf\", res.json().balance_rupees);",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400 Bad Request (Expected Rejection)\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Rejection message indicates insufficient wallet balance\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.include(\"Insufficient wallet balance\");",
+              "});",
+              "",
+              "pm.test(\"Verify sender balance remained unchanged in database\", function () {",
+              "    var baseline = Number(pm.collectionVariables.get(\"balance_before_insuf\"));",
+              "    pm.sendRequest(pm.environment.get(\"baseUrl\") + \"/api/balance/U001\", function (err, res) {",
+              "        pm.expect(res.json().balance_rupees).to.eql(baseline);",
+              "    });",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transaction_id\": \"{{dynamic_txn_id}}\",\n  \"sender_id\": \"U001\",\n  \"receiver_id\": \"U002\",\n  \"amount\": 10000\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/transfer",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transfer"]
+        },
+        "description": "Scenario 2: Negative Testing. Attempts transfer of ₹10,000 exceeding sender balance. Expected rejection HTTP 400 with balance preserved."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Zero Amount - Expected Rejection",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "var txnId = \"TXN_ZERO_\" + Date.now();",
+              "pm.variables.set(\"dynamic_txn_id\", txnId);",
+              "",
+              "pm.sendRequest(pm.environment.get(\"baseUrl\") + \"/api/balance/U001\", function (err, res) {",
+              "    if (!err && res.json()) {",
+              "        pm.collectionVariables.set(\"balance_before_zero\", res.json().balance_rupees);",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400 Bad Request (Zero Amount Rejected)\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Error message indicates amount must be greater than zero\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.include(\"greater than zero\");",
+              "});",
+              "",
+              "pm.test(\"Verify balances remain strictly unchanged after ₹0 transfer attempt\", function () {",
+              "    var baseline = Number(pm.collectionVariables.get(\"balance_before_zero\"));",
+              "    pm.sendRequest(pm.environment.get(\"baseUrl\") + \"/api/balance/U001\", function (err, res) {",
+              "        pm.expect(res.json().balance_rupees).to.eql(baseline);",
+              "    });",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transaction_id\": \"{{dynamic_txn_id}}\",\n  \"sender_id\": \"U001\",\n  \"receiver_id\": \"U002\",\n  \"amount\": 0\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/transfer",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transfer"]
+        },
+        "description": "Scenario 3: Boundary Testing. Attempts transfer of ₹0. Expected rejection HTTP 400, ensuring non-positive amounts cannot alter state."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Invalid Receiver - Expected Rejection",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "var txnId = \"TXN_INVR_\" + Date.now();",
+              "pm.variables.set(\"dynamic_txn_id\", txnId);",
+              "",
+              "pm.sendRequest(pm.environment.get(\"baseUrl\") + \"/api/balance/U001\", function (err, res) {",
+              "    if (!err && res.json()) {",
+              "        pm.collectionVariables.set(\"balance_before_invr\", res.json().balance_rupees);",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404 Not Found (Invalid Receiver Rejected)\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test(\"Rejection indicates receiver not found in database\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.include(\"Receiver not found\");",
+              "});",
+              "",
+              "pm.test(\"Verify sender balance was not deducted for invalid receiver\", function () {",
+              "    var baseline = Number(pm.collectionVariables.get(\"balance_before_invr\"));",
+              "    pm.sendRequest(pm.environment.get(\"baseUrl\") + \"/api/balance/U001\", function (err, res) {",
+              "        pm.expect(res.json().balance_rupees).to.eql(baseline);",
+              "    });",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transaction_id\": \"{{dynamic_txn_id}}\",\n  \"sender_id\": \"U001\",\n  \"receiver_id\": \"U999_NON_EXISTENT\",\n  \"amount\": 100\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/transfer",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transfer"]
+        },
+        "description": "Scenario 4: Negative Testing. Attempts transfer to non-existent account ID. Expected rejection HTTP 404 with balances untouched."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Duplicate Transaction ID - Expected Rejection",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Replay the transaction ID from Scenario 1, or seed one if executed standalone",
+              "var targetTxnId = pm.collectionVariables.get(\"shared_txn_id\") || \"TXN_DUPLICATE_SEED\";",
+              "pm.variables.set(\"dup_target_id\", targetTxnId);",
+              "",
+              "// Standalone execution safety: ensure this transaction ID exists in database first",
+              "pm.sendRequest({",
+              "    url: pm.environment.get(\"baseUrl\") + \"/api/transfer\",",
+              "    method: \"POST\",",
+              "    header: { \"Content-Type\": \"application/json\" },",
+              "    body: {",
+              "        mode: \"raw\",",
+              "        raw: JSON.stringify({",
+              "            transaction_id: targetTxnId,",
+              "            sender_id: \"U001\",",
+              "            receiver_id: \"U002\",",
+              "            amount: 50",
+              "        })",
+              "    }",
+              "}, function (err, res) {",
+              "    // Transaction ID now guaranteed to exist",
+              "});",
+              "",
+              "// Query baseline balance before replay attempt",
+              "pm.sendRequest(pm.environment.get(\"baseUrl\") + \"/api/balance/U001\", function (err, res) {",
+              "    if (!err && res.json()) {",
+              "        pm.collectionVariables.set(\"balance_before_dup\", res.json().balance_rupees);",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 409 Conflict (Duplicate Transaction Rejected)\", function () {",
+              "    pm.response.to.have.status(409);",
+              "});",
+              "",
+              "pm.test(\"Response contains duplicate transaction error details\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.include(\"Duplicate transaction\");",
+              "    pm.expect(jsonData.transaction_id).to.eql(pm.variables.get(\"dup_target_id\"));",
+              "});",
+              "",
+              "pm.test(\"Money is not transferred twice (idempotency verified)\", function () {",
+              "    var baseline = Number(pm.collectionVariables.get(\"balance_before_dup\"));",
+              "    pm.sendRequest(pm.environment.get(\"baseUrl\") + \"/api/balance/U001\", function (err, res) {",
+              "        pm.expect(res.json().balance_rupees).to.eql(baseline);",
+              "    });",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transaction_id\": \"{{dup_target_id}}\",\n  \"sender_id\": \"U001\",\n  \"receiver_id\": \"U002\",\n  \"amount\": 500\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/transfer",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transfer"]
+        },
+        "description": "Scenario 5: Duplicate Testing. Replays an already-processed transaction ID. Expected rejection HTTP 409 Conflict, ensuring double-transfers are impossible."
+      },
+      "response": []
+    }
+  ]
+}

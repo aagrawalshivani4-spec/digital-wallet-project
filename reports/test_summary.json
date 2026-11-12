@@ -1,0 +1,43 @@
+{
+  "executed": true,
+  "total": 16,
+  "passed": 16,
+  "failed": 0,
+  "requests_total": 15,
+  "requests_failed": 0,
+  "duration_ms": 167,
+  "execution_time": "Nov 13, 2026, 01:27:35 AM",
+  "report_file": "postman_test_report.html",
+  "scenarios": [
+    {
+      "id": 1,
+      "name": "Valid money transfer \u2013 expected success",
+      "status": "PASSED",
+      "error": null
+    },
+    {
+      "id": 2,
+      "name": "Insufficient balance \u2013 expected rejection",
+      "status": "PASSED",
+      "error": null
+    },
+    {
+      "id": 3,
+      "name": "Zero amount \u2013 expected rejection",
+      "status": "PASSED",
+      "error": null
+    },
+    {
+      "id": 4,
+      "name": "Invalid receiver \u2013 expected rejection",
+      "status": "PASSED",
+      "error": null
+    },
+    {
+      "id": 5,
+      "name": "Duplicate transaction ID \u2013 expected rejection",
+      "status": "PASSED",
+      "error": null
+    }
+  ]
+}
